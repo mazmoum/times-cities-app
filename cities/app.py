@@ -6,23 +6,30 @@ app = Flask(__name__)
 @app.route("/ville/<nom>")
 def infos_ville(nom):
     try:
-        # Correction du port 8080 -> 5000
-        time_resp = requests.get(f"http://times-app:5000/time/{nom}", timeout=3)
+        # Appel au service times-app
+        response = requests.get(f"http://times-app:5000/time/{nom}", timeout=3)
+        response.raise_for_status()
         
-        if time_resp.status_code != 200:
-            return jsonify(time_resp.json()), 404
-
-        time_data = time_resp.json()
+        time_data = response.json()
         
         return jsonify({
-            "ville": time_data["ville"],
+            "ville": time_data.get("ville", nom),
             "pays": "Maroc",
             "continent": "Afrique",
-            "description": f"{time_data['ville']} est une ville marocaine.",
-            "heure_locale": time_data["heure"]
+            "description": f"{nom} est une ville marocaine.",
+            "heure_locale": time_data.get("heure", "N/A")
         })
     
-    except requests.exceptions.ConnectionError:
-        return jsonify({"erreur": "Service times indisponible"}), 503
+    except requests.exceptions.RequestException as e:
+        return jsonify({
+            "erreur": "Service de temps indisponible",
+            "details": str(e)
+        }), 503
     except KeyError as e:
-        return jsonify({"erreur": f"Champ manquant: {str(e)}"}), 500
+        return jsonify({
+            "erreur": "Format de réponse invalide",
+            "champ_manquant": str(e)
+        }), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5001)
