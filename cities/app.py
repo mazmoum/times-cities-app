@@ -6,7 +6,7 @@ app = Flask(__name__)
 @app.route("/ville/<nom>")
 def infos_ville(nom):
     try:
-        # Appel au service times-app
+        # Appel au service times
         response = requests.get(f"http://times-app:5000/time/{nom}", timeout=3)
         response.raise_for_status()
         
@@ -22,7 +22,7 @@ def infos_ville(nom):
     
     except requests.exceptions.RequestException as e:
         return jsonify({
-            "erreur": "Service de temps indisponible",
+            "erreur": "Service times indisponible",
             "details": str(e)
         }), 503
     except KeyError as e:
